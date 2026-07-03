@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>报销情况说明表</title>
+  <style>
+    @page {
+      size: 595.32pt 841.92pt;
+      margin: 0;
+    }
+
+    :root {
+      --page-w: 595.32pt;
+      --page-h: 841.92pt;
+      --ink: #000;
+      --guide: rgba(71, 120, 210, 0.16);
+      --body-font: "STSong", "Songti SC", "STSongti-SC-Regular", "SimSun", serif;
+      --ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #eef0f4;
+      color: var(--ink);
+      font-family: var(--body-font);
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 1px 8px rgba(26, 31, 44, 0.12);
+      font-family: var(--ui-font);
+    }
+
+    .toolbar button,
+    .toolbar label {
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid #bac2d1;
+      border-radius: 6px;
+      background: #fff;
+      color: #182134;
+      font: 13px/30px var(--ui-font);
+      cursor: pointer;
+    }
+
+    .toolbar button.primary {
+      border-color: #1c4c96;
+      background: #1f5fbf;
+      color: #fff;
+    }
+
+    .toolbar input[type="file"] {
+      display: none;
+    }
+
+    .stage {
+      padding: 24px 0 48px;
+    }
+
+    .sheet {
+      position: relative;
+      width: var(--page-w);
+      min-height: var(--page-h);
+      margin: 0 auto;
+      padding-top: 141.84pt;
+      overflow: visible;
+      background: #fff;
+      box-shadow: 0 12px 32px rgba(26, 31, 44, 0.22);
+      font-size: 12pt;
+      line-height: 1;
+    }
+
+    .attachment {
+      position: absolute;
+      left: 79.32pt;
+      top: 74.02pt;
+      font-size: 14.04pt;
+      line-height: 14.04pt;
+    }
+
+    .title {
+      position: absolute;
+      left: 205pt;
+      top: 102.5pt;
+      width: 170pt;
+      height: 33.5pt;
+      object-fit: contain;
+    }
+
+    .logo {
+      position: absolute;
+      left: 410.16pt;
+      top: 64.56pt;
+      width: 95.88pt;
+      height: 73.44pt;
+      object-fit: contain;
+    }
+
+    .form-table {
+      width: 426.96pt;
+      margin-left: 79.32pt;
+      border-collapse: collapse;
+      table-layout: fixed;
+      color: #000;
+      font-size: 12pt;
+      line-height: 1.3;
+    }
+
+    .form-table col:nth-child(1) { width: 99pt; }
+    .form-table col:nth-child(2) { width: 70.92pt; }
+    .form-table col:nth-child(3) { width: 78pt; }
+    .form-table col:nth-child(4) { width: 70.8pt; }
+    .form-table col:nth-child(5) { width: 27.48pt; }
+    .form-table col:nth-child(6) { width: 80.76pt; }
+
+    .form-table td {
+      height: 31.68pt;
+      padding: 0;
+      border: 0.48pt solid var(--ink);
+      vertical-align: middle;
+      text-align: center;
+      white-space: pre-line;
+    }
+
+    .r-intro td {
+      height: 42.6pt;
+      font-weight: 700;
+    }
+    .r-meta td { height: 33pt; }
+    .detail-row td { height: auto; }
+    .r-total td { height: 31.2pt; }
+    .r-supervisor-1 td { height: 31.8pt; }
+    .r-supervisor-2 td { height: 35.52pt; }
+    .r-leader td { height: 35.52pt; }
+    .r-finance td { height: 44.76pt; }
+    .r-manager td { height: 50.16pt; }
+    .r-flow td { height: 45.24pt; }
+
+    .label-cell {
+      padding: 0 2pt;
+    }
+
+    .row-type-cell {
+      position: relative;
+    }
+
+    .drag-handle {
+      position: absolute;
+      z-index: 2;
+      left: 2pt;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14pt;
+      height: 18pt;
+      color: #243044;
+      font: 10pt/18pt var(--ui-font);
+      text-align: center;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .row-delete {
+      position: absolute;
+      z-index: 2;
+      right: 2pt;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14pt;
+      height: 18pt;
+      border: 0;
+      background: transparent;
+      color: #243044;
+      font: 11pt/18pt var(--ui-font);
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .row-delete:hover,
+    .row-delete:focus {
+      background: var(--guide);
+      outline: 0;
+    }
+
+    .detail-row.dragging {
+      opacity: 0.45;
+    }
+
+    .control {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      height: 31pt;
+      min-height: 31pt;
+      margin: 0;
+      padding: 1.8pt 4pt;
+      overflow: hidden;
+      border: 0;
+      outline: 0;
+      border-radius: 0;
+      background-color: transparent;
+      color: #000;
+      font-family: var(--body-font);
+      font-size: 11.2pt;
+      line-height: 1.28;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .row-type-cell .control {
+      width: calc(100% - 34pt);
+      margin-left: 17pt;
+      padding-left: 4pt;
+      padding-right: 4pt;
+    }
+
+    .control:hover,
+    .control:focus {
+      background-color: var(--guide);
+      box-shadow: inset 0 0 0 0.6pt rgba(31, 95, 191, 0.42);
+    }
+
+    select.control {
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      padding-right: 12pt;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #3d495e 50%),
+        linear-gradient(135deg, #3d495e 50%, transparent 50%);
+      background-position:
+        calc(100% - 8pt) 50%,
+        calc(100% - 5pt) 50%;
+      background-size: 3pt 3pt, 3pt 3pt;
+      background-repeat: no-repeat;
+    }
+
+    textarea.control {
+      height: auto;
+      min-height: 31pt;
+      resize: none;
+      overflow: hidden;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+
+    .project-control {
+      text-align: center;
+    }
+
+    .right-control {
+      text-align: right;
+    }
+
+    .date-control {
+      font-family: Calibri, "FangSong", "STFangsong", serif;
+      font-size: 11pt;
+    }
+
+    @media screen {
+      .detail-row .date-control {
+        position: relative;
+        padding-left: 1pt;
+        padding-right: 1pt;
+        cursor: pointer;
+      }
+
+      .detail-row .date-control::-webkit-calendar-picker-indicator {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .detail-row .date-control::-webkit-datetime-edit {
+        padding: 0;
+      }
+    }
+
+    .amount-control::-webkit-outer-spin-button,
+    .amount-control::-webkit-inner-spin-button {
+      margin: 0;
+      -webkit-appearance: none;
+    }
+
+    .amount-control {
+      appearance: textfield;
+      font-family: Calibri, "FangSong", "STFangsong", serif;
+    }
+
+    .readonly-control {
+      cursor: default;
+    }
+
+    @media print {
+      body {
+        width: var(--page-w);
+        min-height: var(--page-h);
+        background: #fff;
+      }
+
+      .toolbar {
+        display: none !important;
+      }
+
+      .stage {
+        padding: 0;
+      }
+
+      .sheet {
+        margin: 0;
+        box-shadow: none;
+      }
+
+      .control,
+      .control:hover,
+      .control:focus {
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      select.control {
+        padding-right: 4pt;
+        background-image: none !important;
+      }
+
+      .row-type-cell .control {
+        width: 100%;
+        margin-left: 0;
+        padding-left: 4pt;
+        padding-right: 4pt;
+      }
+
+      .drag-handle,
+      .row-delete {
+        display: none !important;
+      }
+
+      .date-control::-webkit-calendar-picker-indicator {
+        display: none;
+      }
+
+      .date-control.empty-date {
+        color: transparent;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar" aria-hidden="true">
+    <button class="primary" type="button" id="printBtn">导出 PDF</button>
+    <button type="button" id="sampleBtn">填入示例</button>
+    <button type="button" id="clearBtn">清空</button>
+    <button type="button" id="addRowBtn">新增行</button>
+    <button type="button" id="copyLastRowBtn">复制上一行</button>
+    <button type="button" id="downloadBtn">导出 JSON</button>
+    <label for="jsonFile">导入 JSON</label>
+    <input id="jsonFile" type="file" accept="application/json,.json">
+  </div>
+
+  <main class="stage">
+    <section class="sheet" id="sheet" aria-label="报销情况说明表">
+      <img class="logo" src="assets/grsofter_logo.png" alt="">
+      <div class="attachment">附件 2</div>
+      <img class="title" src="assets/original_title.png" alt="报销情况说明表">
+
+      <table class="form-table" aria-label="报销情况说明表">
+        <colgroup>
+          <col>
+          <col>
+          <col>
+          <col>
+          <col>
+          <col>
+        </colgroup>
+        <tbody id="formBody">
+          <tr class="r-intro">
+            <td class="label-cell">不合规费用类型</td>
+            <td class="label-cell" colspan="5">费用超标、设备费、材料费、劳务费、餐费 2、打车费、退<br>票费、租车费等</td>
+          </tr>
+          <tr class="r-meta">
+            <td class="label-cell">姓名</td>
+            <td colspan="2"><input class="control" data-key="name" type="text"></td>
+            <td class="label-cell">部门</td>
+            <td colspan="2"><input class="control" data-key="department" type="text"></td>
+          </tr>
+          <tr class="r-meta">
+            <td class="label-cell">对应报销单号</td>
+            <td colspan="2"><input class="control" data-key="reimbursementNo" type="text"></td>
+            <td class="label-cell">填写日期</td>
+            <td colspan="2"><input class="control date-control" data-key="fillDate" type="date"></td>
+          </tr>
+          <tr class="r-detail-head">
+            <td class="label-cell">不合规费用类型</td>
+            <td class="label-cell">费用时间</td>
+            <td class="label-cell">项目</td>
+            <td class="label-cell" colspan="2">特殊原因具体说<br>明</td>
+            <td class="label-cell">金额</td>
+          </tr>
+          <tr class="r-total" id="afterDetailRows">
+            <td class="label-cell" colspan="5">报销合计</td>
+            <td><input class="control amount-control right-control readonly-control" data-key="total" type="text" readonly></td>
+          </tr>
+          <tr class="r-supervisor-1">
+            <td class="label-cell" rowspan="2">直接主管意见</td>
+            <td class="label-cell">情况是否属<br>实</td>
+            <td></td>
+            <td class="label-cell" colspan="2">是否同意报销</td>
+            <td></td>
+          </tr>
+          <tr class="r-supervisor-2">
+            <td class="label-cell">同意报销金<br>额</td>
+            <td></td>
+            <td class="label-cell" colspan="2">确认签字</td>
+            <td></td>
+          </tr>
+          <tr class="r-leader">
+            <td class="label-cell">分管领导意见</td>
+            <td colspan="5"></td>
+          </tr>
+          <tr class="r-finance">
+            <td class="label-cell">计财部意见</td>
+            <td colspan="5"></td>
+          </tr>
+          <tr class="r-manager">
+            <td class="label-cell">总经理意见</td>
+            <td colspan="5"></td>
+          </tr>
+          <tr class="r-flow">
+            <td class="label-cell">签字流程</td>
+            <td class="label-cell" colspan="5">报销人→部门经理→分管领导→计财部→总经理</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </section>
+  </main>
+
+  <script>
+    const MIN_DETAIL_ROWS = 5;
+    const typeOptions = ["", "费用超标", "设备费", "材料费", "劳务费", "餐费", "打车费", "退票费", "租车费", "其他"];
+    const formBody = document.getElementById("formBody");
+    const afterDetailRows = document.getElementById("afterDetailRows");
+    let draggedRow = null;
+
+    function todayISO() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      return now.toISOString().slice(0, 10);
+    }
+
+    function blankRow() {
+      return {
+        type: "",
+        date: "",
+        project: "",
+        reason: "",
+        amount: ""
+      };
+    }
+
+    function createEmptyData() {
+      return {
+        name: "",
+        department: "",
+        reimbursementNo: "",
+        fillDate: todayISO(),
+        rows: Array.from({ length: MIN_DETAIL_ROWS }, blankRow),
+        total: ""
+      };
+    }
+
+    const sampleData = {
+      name: "李明",
+      department: "综合部",
+      reimbursementNo: "",
+      fillDate: todayISO(),
+      rows: [
+        { type: "打车费", date: todayISO(), project: "项目A", reason: "时间紧迫无其它合适出行方式", amount: "86.00" },
+        { type: "打车费", date: todayISO(), project: "项目A", reason: "时间紧迫无其它合适出行方式", amount: "42.00" },
+        { type: "", date: "", project: "", reason: "", amount: "" },
+        { type: "", date: "", project: "", reason: "", amount: "" },
+        { type: "", date: "", project: "", reason: "", amount: "" }
+      ]
+    };
+
+    function readPath(source, path) {
+      return path.split(".").reduce((value, key) => {
+        if (value == null) return "";
+        return value[key] ?? "";
+      }, source);
+    }
+
+    function writePath(target, path, value) {
+      const keys = path.split(".");
+      const last = keys.pop();
+      let cursor = target;
+      keys.forEach((key, index) => {
+        const nextKey = keys[index + 1] ?? last;
+        if (cursor[key] == null) cursor[key] = /^\d+$/.test(nextKey) ? [] : {};
+        cursor = cursor[key];
+      });
+      cursor[last] = value;
+    }
+
+    function controlValue(field) {
+      return field.value.trim();
+    }
+
+    function setControlValue(field, value) {
+      const normalizedValue = value == null ? "" : String(value);
+      if (field.tagName === "SELECT" && normalizedValue && !Array.from(field.options).some((option) => option.value === normalizedValue)) {
+        field.append(new Option(normalizedValue, normalizedValue));
+      }
+      field.value = normalizedValue;
+    }
+
+    function rowHasData(row) {
+      return Object.values(row || {}).some((value) => String(value ?? "").trim());
+    }
+
+    function normalizeData(data) {
+      const base = createEmptyData();
+      const incoming = data || {};
+      const model = Object.assign({}, base, incoming);
+      const incomingRows = Array.isArray(incoming.rows) ? incoming.rows : [];
+      const rowCount = Math.max(MIN_DETAIL_ROWS, incomingRows.length);
+      model.rows = Array.from({ length: rowCount }, (_, index) => {
+        const row = Object.assign(blankRow(), incomingRows[index] || {});
+        if (!row.date && rowHasData(row)) row.date = todayISO();
+        return row;
+      });
+      if (!model.fillDate) model.fillDate = todayISO();
+      return model;
+    }
+
+    function buildTypeOptions(select) {
+      select.replaceChildren(...typeOptions.map((type) => {
+        const option = document.createElement("option");
+        option.value = type;
+        option.textContent = type;
+        return option;
+      }));
+    }
+
+    function createDetailRow(index) {
+      const row = document.createElement("tr");
+      row.className = "detail-row";
+      row.innerHTML = [
+        '<td class="row-type-cell"><span class="drag-handle" draggable="true" title="拖动排序" aria-label="拖动排序">↕</span><button class="row-delete" type="button" title="删除当前行" aria-label="删除当前行">×</button><select class="control type-control" data-field="type"></select></td>',
+        '<td><input class="control date-control" data-field="date" type="date"></td>',
+        '<td><textarea class="control project-control" data-field="project"></textarea></td>',
+        '<td colspan="2"><textarea class="control reason-control" data-field="reason"></textarea></td>',
+        '<td><input class="control amount-control right-control" data-field="amount" type="number" step="0.01" min="0"></td>'
+      ].join("");
+      row.querySelectorAll(".type-control").forEach(buildTypeOptions);
+      setDetailRowKey(row, index);
+      return row;
+    }
+
+    function setDetailRowKey(row, index) {
+      row.dataset.rowIndex = String(index);
+      row.querySelectorAll("[data-field]").forEach((field) => {
+        field.dataset.key = `rows.${index}.${field.dataset.field}`;
+      });
+    }
+
+    function reindexDetailRows() {
+      detailRows().forEach((row, index) => setDetailRowKey(row, index));
+    }
+
+    function detailRows() {
+      return Array.from(formBody.querySelectorAll(".detail-row"));
+    }
+
+    function renderDetailRows(count) {
+      formBody.querySelectorAll(".detail-row").forEach((row) => row.remove());
+      for (let index = 0; index < count; index += 1) {
+        formBody.insertBefore(createDetailRow(index), afterDetailRows);
+      }
+    }
+
+    function autoGrowTextarea(textarea) {
+      const minimum = Number.parseFloat(getComputedStyle(textarea).minHeight) || 31;
+      if (!textarea.value.trim()) {
+        textarea.style.height = "";
+        return;
+      }
+      textarea.style.height = `${minimum}px`;
+      textarea.style.height = `${Math.max(textarea.scrollHeight + 2, minimum)}px`;
+    }
+
+    function autoGrowAll() {
+      document.querySelectorAll("textarea.control").forEach(autoGrowTextarea);
+    }
+
+    function updateDateEmptyState(field) {
+      if (!field.matches('input[type="date"]')) return;
+      field.classList.toggle("empty-date", !field.value);
+    }
+
+    function updateAllDateEmptyStates() {
+      document.querySelectorAll('input[type="date"]').forEach(updateDateEmptyState);
+    }
+
+    function refreshDerivedFields() {
+      autoGrowAll();
+      updateAllDateEmptyStates();
+      calculateTotal();
+    }
+
+    function ensureRowDate(field) {
+      const match = field.dataset.key?.match(/^rows\.(\d+)\.(type|project|reason|amount)$/);
+      if (!match || !controlValue(field)) return;
+      const dateField = document.querySelector(`[data-key="rows.${match[1]}.date"]`);
+      if (dateField && !dateField.value) dateField.value = todayISO();
+      if (dateField) updateDateEmptyState(dateField);
+    }
+
+    function calculateTotal() {
+      let hasAmount = false;
+      const total = Array.from(document.querySelectorAll('[data-key^="rows."][data-key$=".amount"]'))
+        .reduce((sum, field) => {
+          const rawValue = controlValue(field);
+          if (!rawValue) return sum;
+          const value = Number(rawValue);
+          if (!Number.isFinite(value)) return sum;
+          hasAmount = true;
+          return sum + value;
+        }, 0);
+      const totalField = document.querySelector('[data-key="total"]');
+      if (totalField) totalField.value = hasAmount ? total.toFixed(2) : "";
+    }
+
+    function setReimbursementData(data) {
+      const model = normalizeData(data);
+      renderDetailRows(model.rows.length);
+      document.querySelectorAll("[data-key]").forEach((field) => {
+        setControlValue(field, readPath(model, field.dataset.key));
+      });
+      refreshDerivedFields();
+    }
+
+    function getReimbursementData() {
+      calculateTotal();
+      const model = createEmptyData();
+      model.rows = [];
+      document.querySelectorAll("[data-key]").forEach((field) => {
+        writePath(model, field.dataset.key, controlValue(field));
+      });
+      return model;
+    }
+
+    function addDetailRow(rowData = blankRow()) {
+      const model = getReimbursementData();
+      model.rows.push(Object.assign(blankRow(), rowData));
+      setReimbursementData(model);
+      detailRows().at(-1)?.querySelector("[data-key]")?.focus();
+    }
+
+    function copyLastFilledRow() {
+      const model = getReimbursementData();
+      const sourceIndex = model.rows.map(rowHasData).lastIndexOf(true);
+      if (sourceIndex === -1) {
+        addDetailRow();
+        return;
+      }
+      model.rows.splice(sourceIndex + 1, 0, Object.assign(blankRow(), model.rows[sourceIndex]));
+      setReimbursementData(model);
+      detailRows()[sourceIndex + 1]?.querySelector("[data-key]")?.focus();
+    }
+
+    function deleteDetailRow(row) {
+      if (!row) return;
+      row.remove();
+      if (!detailRows().length) formBody.insertBefore(createDetailRow(0), afterDetailRows);
+      reindexDetailRows();
+      refreshDerivedFields();
+    }
+
+    function downloadJson() {
+      const blob = new Blob([JSON.stringify(getReimbursementData(), null, 2)], {
+        type: "application/json"
+      });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = "reimbursement_statement_data.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function getDragAfterRow(container, y) {
+      const rows = Array.from(container.querySelectorAll(".detail-row:not(.dragging)"));
+      return rows.reduce((closest, row) => {
+        const box = row.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, row };
+        }
+        return closest;
+      }, { offset: Number.NEGATIVE_INFINITY, row: null }).row;
+    }
+
+    formBody.addEventListener("dragstart", (event) => {
+      const handle = event.target.closest(".drag-handle");
+      const row = event.target.closest(".detail-row");
+      if (!handle || !row) {
+        event.preventDefault();
+        return;
+      }
+      draggedRow = row;
+      row.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", row.dataset.rowIndex || "");
+    });
+
+    formBody.addEventListener("dragover", (event) => {
+      if (!draggedRow) return;
+      event.preventDefault();
+      const afterRow = getDragAfterRow(formBody, event.clientY);
+      formBody.insertBefore(draggedRow, afterRow || afterDetailRows);
+    });
+
+    function finishDrag() {
+      if (!draggedRow) return;
+      draggedRow.classList.remove("dragging");
+      draggedRow = null;
+      reindexDetailRows();
+      refreshDerivedFields();
+    }
+
+    formBody.addEventListener("drop", (event) => {
+      event.preventDefault();
+      finishDrag();
+    });
+    formBody.addEventListener("dragend", finishDrag);
+
+    formBody.addEventListener("click", (event) => {
+      const deleteButton = event.target.closest(".row-delete");
+      if (!deleteButton) return;
+      deleteDetailRow(deleteButton.closest(".detail-row"));
+    });
+
+    function handleFieldEdit(field) {
+      if (field.matches("textarea")) autoGrowTextarea(field);
+      updateDateEmptyState(field);
+      ensureRowDate(field);
+      if (field.dataset.key?.endsWith(".amount")) calculateTotal();
+    }
+
+    document.addEventListener("input", (event) => {
+      const field = event.target.closest("[data-key]");
+      if (field) handleFieldEdit(field);
+    });
+
+    document.addEventListener("change", (event) => {
+      const field = event.target.closest("[data-key]");
+      if (field) handleFieldEdit(field);
+    });
+
+    window.addEventListener("beforeprint", refreshDerivedFields);
+
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+    document.getElementById("sampleBtn").addEventListener("click", () => setReimbursementData(sampleData));
+    document.getElementById("clearBtn").addEventListener("click", () => setReimbursementData(createEmptyData()));
+    document.getElementById("addRowBtn").addEventListener("click", () => addDetailRow());
+    document.getElementById("copyLastRowBtn").addEventListener("click", copyLastFilledRow);
+    document.getElementById("downloadBtn").addEventListener("click", downloadJson);
+    document.getElementById("jsonFile").addEventListener("change", async (event) => {
+      const [file] = event.target.files;
+      if (!file) return;
+      setReimbursementData(JSON.parse(await file.text()));
+      event.target.value = "";
+    });
+
+    window.setReimbursementData = setReimbursementData;
+    window.getReimbursementData = getReimbursementData;
+    setReimbursementData(createEmptyData());
+  </script>
+</body>
+</html>

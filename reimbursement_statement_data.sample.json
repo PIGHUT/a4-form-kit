@@ -1,0 +1,44 @@
+{
+  "name": "李明",
+  "department": "综合部",
+  "reimbursementNo": "",
+  "fillDate": "2026-07-03",
+  "rows": [
+    {
+      "type": "打车费",
+      "date": "2026-07-03",
+      "project": "项目A",
+      "reason": "时间紧迫无其它合适出行方式",
+      "amount": "86.00"
+    },
+    {
+      "type": "打车费",
+      "date": "2026-07-03",
+      "project": "项目A",
+      "reason": "时间紧迫无其它合适出行方式",
+      "amount": "42.00"
+    },
+    {
+      "type": "",
+      "date": "",
+      "project": "",
+      "reason": "",
+      "amount": ""
+    },
+    {
+      "type": "",
+      "date": "",
+      "project": "",
+      "reason": "",
+      "amount": ""
+    },
+    {
+      "type": "",
+      "date": "",
+      "project": "",
+      "reason": "",
+      "amount": ""
+    }
+  ],
+  "total": "128.00"
+}
